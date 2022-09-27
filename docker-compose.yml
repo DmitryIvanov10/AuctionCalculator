@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  nginx:
+    build:
+      context: .
+      target: app_nginx
+    image: my/nginx
+    container_name: nginx
+    restart: on-failure
+    ports:
+      - "8080:80"
+    volumes:
+      - ./.docker/nginx/logs:/var/log/nginx/
+      - ./public:/app/public:ro
+    depends_on:
+      - php
+    networks:
+      - app-network
+
+  php:
+    build:
+      context: .
+      target: app_php
+    image: my/php:8.1
+    container_name: php
+    restart: on-failure
+    env_file:
+      - ./.env
+    volumes:
+      - ./.docker/php/app/cache:/var/www/dev/app/cache/:rw
+      - ./.docker/php/app/logs:/var/www/dev/app/logs/:rw
+      - ./.docker/.composer:/var/www/.composer
+      - .:/app:rw,cached
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    name: app-network
+    driver: bridge

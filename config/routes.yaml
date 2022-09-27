@@ -1,0 +1,4 @@
+php_info:
+  path: /test
+  controller: App\Controller\TestController::test
+  methods: GET
