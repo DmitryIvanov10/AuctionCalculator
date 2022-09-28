@@ -12,12 +12,15 @@ final class SecondPriceSealedBidAuctionInfo implements AuctionInfoInterface
      * @var array<string, int[]>
      */
     private array $buyersBids;
-    private int $reservedPrice;
+    private int $reservePrice;
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function __construct(array $data)
     {
         try {
-            $this->setReservedPrice($data['reservedPrice']);
+            $this->setReservePrice($data['reservePrice']);
 
             foreach ($data['buyersBids'] as $buyerName => $bids) {
                 $this->setBuyersBids($buyerName, ...$bids);
@@ -35,14 +38,14 @@ final class SecondPriceSealedBidAuctionInfo implements AuctionInfoInterface
         return $this->buyersBids;
     }
 
-    public function getReservedPrice(): int
+    public function getReservePrice(): int
     {
-        return $this->reservedPrice;
+        return $this->reservePrice;
     }
 
-    private function setReservedPrice(int $reservedPrice): void
+    private function setReservePrice(int $reservePrice): void
     {
-        $this->reservedPrice = $reservedPrice;
+        $this->reservePrice = $reservePrice;
     }
 
     private function setBuyersBids(string $buyerName, int ...$bids): void

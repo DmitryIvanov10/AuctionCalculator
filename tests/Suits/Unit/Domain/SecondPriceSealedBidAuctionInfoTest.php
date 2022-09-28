@@ -11,19 +11,19 @@ final class SecondPriceSealedBidAuctionInfoTest extends TestCase
 {
     public function testSuccessfulCreate()
     {
-        $reservedPrice = 100;
+        $reservePrice = 100;
         $buyersBids = [
             'A' => [80, 120],
             'B' => [130, 150],
         ];
         $input = [
-            'reservedPrice' => $reservedPrice,
+            'reservePrice' => $reservePrice,
             'buyersBids' => $buyersBids,
         ];
 
         $info = new SecondPriceSealedBidAuctionInfo($input);
 
-        $this->assertSame($reservedPrice, $info->getReservedPrice());
+        $this->assertSame($reservePrice, $info->getReservePrice());
         $this->assertSame($buyersBids, $info->getBuyersBids());
     }
 
@@ -52,12 +52,12 @@ final class SecondPriceSealedBidAuctionInfoTest extends TestCase
             ],
             'no buyers bids' => [
                 [
-                    'reservedPrice' => 100,
+                    'reservePrice' => 100,
                 ],
             ],
             'incorrect buyers name' => [
                 [
-                    'reservedPrice' => 100,
+                    'reservePrice' => 100,
                     'buyersBids' => [
                         1 => [],
                     ],
@@ -65,7 +65,7 @@ final class SecondPriceSealedBidAuctionInfoTest extends TestCase
             ],
             'incorrect bids' => [
                 [
-                    'reservedPrice' => 100,
+                    'reservePrice' => 100,
                     'buyersBids' => [
                         'A' => ['a'],
                     ],
@@ -73,7 +73,7 @@ final class SecondPriceSealedBidAuctionInfoTest extends TestCase
             ],
             'incorrect reserved price format' => [
                 [
-                    'reservedPrice' => 'a',
+                    'reservePrice' => 'a',
                     'buyersBids' => [
                         'A' => [100],
                     ],

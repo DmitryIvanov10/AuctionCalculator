@@ -7,6 +7,9 @@ use UnexpectedValueException;
 
 final class AuctionFactory
 {
+    /**
+     * @throws UnexpectedValueException
+     */
     public function create(AuctionInfoInterface $auctionInfo): AuctionInterface
     {
         return match($auctionInfo::class) {
@@ -15,6 +18,9 @@ final class AuctionFactory
         };
     }
 
+    /**
+     * @throws UnexpectedValueException when data inside info is against the domain rules
+     */
     private function createSecondPriceSealedBidAuction(
         SecondPriceSealedBidAuctionInfo $auctionInfo
     ): SecondPriceSealedBidAuction {
@@ -30,6 +36,6 @@ final class AuctionFactory
             $buyers[] = $buyer;
         }
 
-        return new SecondPriceSealedBidAuction($auctionInfo->getReservedPrice(), ...$buyers);
+        return new SecondPriceSealedBidAuction($auctionInfo->getReservePrice(), ...$buyers);
     }
 }

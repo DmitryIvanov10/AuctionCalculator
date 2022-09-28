@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Domain;
 
 use RuntimeException;
+use UnexpectedValueException;
 
 final class SecondPriceSealedBidAuction implements AuctionInterface
 {
@@ -12,13 +13,23 @@ final class SecondPriceSealedBidAuction implements AuctionInterface
      */
     private array $buyers;
     private ?BuyerInterface $winner;
-    private ?BuyerInterface $runnerUp;
+    private Bid $winningBid;
+    private readonly int $reservePrice;
 
-    public function __construct(private readonly int $reservePrice, BuyerInterface ...$buyers)
+    public function __construct(int $reservePrice, BuyerInterface ...$buyers)
     {
+        if ($reservePrice <= 0) {
+            throw new UnexpectedValueException('Reserve price must more than 0.');
+        }
+
+        $this->reservePrice = $reservePrice;
         $this->buyers = $buyers;
+        $this->winningBid = new Bid($this->reservePrice);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getWinner(): BuyerInterface
     {
         if (isset($this->winner)) {
@@ -36,22 +47,23 @@ final class SecondPriceSealedBidAuction implements AuctionInterface
             }
 
             if ($buyer->getHighestBid()->isHigherThan($this->winner->getHighestBid())) {
-                $this->runnerUp = $this->winner;
+                $this->winningBid = $this->winner->getHighestBid();
                 $this->winner = $buyer;
             }
         }
 
-        return $this->winner ?? throw new RuntimeException('No winner found');
+        return $this->winner ?? throw new RuntimeException('The auction has no winner.');
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getWinningBid(): Bid
     {
         if (!isset($this->winner)) {
             $this->winner = $this->getWinner();
         }
 
-        return isset($this->runnerUp)
-            ? $this->runnerUp->getHighestBid()
-            : new Bid($this->reservePrice);
+        return $this->winningBid;
     }
 }

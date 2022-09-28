@@ -4,8 +4,11 @@ declare(strict_types=1);
 namespace App\Tests\Suits\Functional\Domain;
 
 use App\Domain\AuctionFactory;
+use App\Domain\AuctionInterface;
 use App\Domain\SecondPriceSealedBidAuctionInfo;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use UnexpectedValueException;
 
 final class SecondPriceSealedBidAuctionTest extends TestCase
 {
@@ -21,12 +24,75 @@ final class SecondPriceSealedBidAuctionTest extends TestCase
     /**
      * @param array<string, mixed> $auctionInfo
      *
+     * @dataProvider incorrectAuctionInfoDataProvider
+     */
+    public function testCreateAuctionWithIncorrectData(array $auctionInfo)
+    {
+        $this->expectException(UnexpectedValueException::class);
+        $this->auctionFactory->create(
+            new SecondPriceSealedBidAuctionInfo($auctionInfo)
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function incorrectAuctionInfoDataProvider(): array
+    {
+        return [
+            'incorrect reserve price' => [
+                'auctionInfo' => [
+                    'reservePrice' => 0,
+                    'buyersBids' => [
+                        'A' => [100],
+                    ],
+                ],
+            ],
+            'incorrect buyer name' => [
+                'auctionInfo' => [
+                    'reservePrice' => 100,
+                    'buyersBids' => [
+                        '' => [100],
+                    ],
+                ],
+            ],
+            'incorrect bid value' => [
+                'auctionInfo' => [
+                    'reservePrice' => 100,
+                    'buyersBids' => [
+                        'A' => [0],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    public function testGetWinnerWhenNoWinnerForAuction()
+    {
+        $auction = $this->createAuctionWithNoWinner();
+
+        $this->expectException(RuntimeException::class);
+        $auction->getWinner();
+    }
+
+    public function testGetWinnerBidWhenNoWinnerForAuction()
+    {
+        $auction = $this->createAuctionWithNoWinner();
+
+        $this->expectException(RuntimeException::class);
+        $auction->getWinningBid();
+    }
+
+    /**
+     * @param array<string, mixed> $auctionInfo
+     *
      * @dataProvider auctionInfoDataProvider
      */
     public function testAuction(string $expectedWinner, int $expectedPrice, array $auctionInfo)
     {
-        $auctionInfoObject = new SecondPriceSealedBidAuctionInfo($auctionInfo);
-        $auction = $this->auctionFactory->create($auctionInfoObject);
+        $auction = $this->auctionFactory->create(
+            new SecondPriceSealedBidAuctionInfo($auctionInfo)
+        );
 
         $this->assertSame($expectedWinner, $auction->getWinner()->getName());
         $this->assertSame($expectedPrice, $auction->getWinningBid()->getValue());
@@ -38,32 +104,32 @@ final class SecondPriceSealedBidAuctionTest extends TestCase
     public function auctionInfoDataProvider(): array
     {
         return [
-            'one bidder' => [
+            'one buyer' => [
                 'expectedWinner' => 'A',
                 'expectedPrice' => 100,
                 'auctionInfo' => [
-                    'reservedPrice' => 100,
+                    'reservePrice' => 100,
                     'buyersBids' => [
                         'A' => [100],
                     ],
                 ],
             ],
-            'two bidders one less then reserved price' => [
+            'two buyers one less then reserve price' => [
                 'expectedWinner' => 'A',
                 'expectedPrice' => 100,
                 'auctionInfo' => [
-                    'reservedPrice' => 100,
+                    'reservePrice' => 100,
                     'buyersBids' => [
                         'A' => [110],
                         'B' => [90],
                     ],
                 ],
             ],
-            'two bidders both more then reserved price' => [
+            'two buyers both more then reserve price' => [
                 'expectedWinner' => 'B',
                 'expectedPrice' => 110,
                 'auctionInfo' => [
-                    'reservedPrice' => 100,
+                    'reservePrice' => 100,
                     'buyersBids' => [
                         'A' => [110],
                         'B' => [120],
@@ -74,7 +140,7 @@ final class SecondPriceSealedBidAuctionTest extends TestCase
                 'expectedWinner' => 'E',
                 'expectedPrice' => 130,
                 'auctionInfo' => [
-                    'reservedPrice' => 100,
+                    'reservePrice' => 100,
                     'buyersBids' => [
                         'A' => [110, 130],
                         'B' => [],
@@ -85,5 +151,18 @@ final class SecondPriceSealedBidAuctionTest extends TestCase
                 ],
             ],
         ];
+    }
+
+    private function createAuctionWithNoWinner(): AuctionInterface
+    {
+        return $this->auctionFactory->create(
+            new SecondPriceSealedBidAuctionInfo([
+                'reservePrice' => 100,
+                'buyersBids' => [
+                    'A' => [80],
+                    'B' => [90],
+                ],
+            ])
+        );
     }
 }
